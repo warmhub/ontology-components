@@ -1,0 +1,99 @@
+{
+  "$schema": "https://docs.warmhub.ai/schema/component-manifest.v1.json",
+  "component": {
+    "id": "ai.warmhub.data.Grounding",
+    "name": "grounding",
+    "version": "4.0.0"
+  },
+  "shapes": [
+    {
+      "name": "Source",
+      "description": "The logical source system or publishing authority — the durable identity behind many artifacts over time. Naming is repository-specific under a NamingContract; examples are Source/{system-slug} in a per-source repository and Source/grounding/{authority}/{source-system} in a co-located repository. These are conventions, not platform-fixed names.",
+      "fields": {
+        "publisherName": {
+          "type": "string",
+          "description": "The institution that publishes. Example: \"U.S. Environmental Protection Agency\""
+        },
+        "systemName": {
+          "type": "string",
+          "description": "The specific system or product. Example: \"ICIS-NPDES national data downloads\""
+        },
+        "authorityClass?": {
+          "type": "string",
+          "description": "What kind of authority this is for the claims it publishes: regulatory-system, statistical-agency, registry, or commercial-aggregator. Example: regulatory-system"
+        },
+        "canonicalUrl": {
+          "type": "string",
+          "description": "The official entry point — the publisher's page, never a third-party mirror. Example: https://echo.epa.gov/tools/data-downloads"
+        }
+      }
+    },
+    {
+      "name": "SourceArtifact",
+      "description": "The versioned canonical semantic snapshots of one logical dataset stream from one Source. The Thing identity names the enduring stream under a repository NamingContract; examples are SourceArtifact/{stream-slug} in a per-source repository and SourceArtifact/grounding/{authority}/{source-system}/{stream-slug} in a co-located repository. Each Thing version records one accepted canonical snapshot. Transport-only differences must canonicalize to the same semanticSha256 and are a no-op; a changed snapshot revises the same Thing. These are conventions, not platform-fixed names.",
+      "fields": {
+        "source": {
+          "type": "wref",
+          "description": "The logical publishing source system (a Source Thing). Example: Source/epa-icis-npdes",
+          "shape": "Source"
+        },
+        "semanticSha256": {
+          "type": "string",
+          "description": "Lowercase SHA-256 of the canonical semantic artifact bytes for this snapshot. It identifies the source claims after the declared canonicalization policy, not the publisher's raw transport envelope."
+        },
+        "mediaType": {
+          "type": "string",
+          "description": "Media type of the canonical semantic artifact. Record-oriented sources should normally use application/x-ndjson."
+        },
+        "byteLength?": {
+          "type": "number",
+          "description": "Exact size of the canonical semantic artifact bytes when recorded."
+        },
+        "originalUrl": {
+          "type": "string",
+          "description": "Credential-free publisher entry or retrieval locator from which the source claims were obtained. Remove userinfo, fragments, signed parameters, and unreviewed secret-bearing query material."
+        },
+        "durableUri": {
+          "type": "string",
+          "description": "Credential-free authoritative durable locator for the canonical semantic artifact bytes whose hash is semanticSha256. Temporary and signed URLs are not durable locators."
+        },
+        "archiveUri?": {
+          "type": "string",
+          "description": "Credential-free publisher archive or independent archival locator — corroborating evidence, not the root of trust."
+        },
+        "acceptedAt": {
+          "type": "string",
+          "description": "ISO timestamp when this semantic snapshot first became the accepted current version of the logical dataset stream. Re-observing the current semanticSha256 does not revise it. Example: 2026-07-14T06:12:00Z"
+        },
+        "sourcePublishedAt?": {
+          "type": "string",
+          "description": "When the Source says it published this artifact, when known. This is source time, not producer run time."
+        },
+        "sourceEffectiveDate?": {
+          "type": "string",
+          "description": "The period the artifact's contents claim to describe, when meaningful. Example: 2025-Q4"
+        },
+        "canonicalizationPolicy": {
+          "type": "string",
+          "description": "Reviewed stable policy name/version that defines the canonical semantic projection, record ordering, and serialization used for semanticSha256. It is not a run, deployment, connector instance, or attempt id. Example: epa-npdes-dmr-canonical-jsonl/v1"
+        }
+      }
+    }
+  ],
+  "seeds": [],
+  "subscriptions": [],
+  "credentials": [],
+  "runtimeAccess": {
+    "reads": [],
+    "writes": []
+  },
+  "health": {
+    "requires": {
+      "shapes": [
+        "Source",
+        "SourceArtifact"
+      ]
+    }
+  },
+  "teardown": {}
+}

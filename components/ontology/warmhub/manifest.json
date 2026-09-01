@@ -1,0 +1,325 @@
+{
+  "$schema": "https://docs.warmhub.ai/schema/component-manifest.v1.json",
+  "component": {
+    "id": "ai.warmhub.data.Ontology",
+    "name": "ontology",
+    "version": "2.0.1"
+  },
+  "shapes": [
+    {
+      "name": "OntologyCharter",
+      "description": "One active charter per repo — the constitution of this repo's ontology. Singleton with a fixed, well-known name: OntologyCharter/ontology/charter, so any agent can fetch it in any repo without discovery. This charter binds only its own repo; cross-repo composition is expressed as dependencies (dependsOn), never membership.",
+      "fields": {
+        "mission": {
+          "type": "string",
+          "description": "What this repo's ontology represents and for whom (the audience belongs in the mission; per-question personas live on the questions) — one paragraph a reviewer can test proposals against. Example: \"Canonical identity and regulatory knowledge for US public water infrastructure — for the engineers, analysts, and agents who compose beliefs over it.\""
+        },
+        "nonGoals": {
+          "type": "array",
+          "description": "What this ontology deliberately is not. As load-bearing as the mission. Example: [\"Utility finance and rates\", \"Hydraulic process modeling\"]",
+          "items": "string"
+        },
+        "commitments": {
+          "type": "array",
+          "description": "Binding design rules (identity, epistemic, temporal, layering). A proposal that violates one requires an OntologyDecision, not a silent exception. Example: [\"Evaluate established domain identities before minting alternatives; never assume or reject source identity categorically\"]",
+          "items": "string"
+        },
+        "dependsOn?": {
+          "type": "array",
+          "description": "Upstream ontologies this repo composes over — each entry the canonical wref of an upstream release Set (preferred: pins the exact contract versions depended on, like a lockfile) or an upstream charter. Dependencies, never membership: this charter binds only its own repo. Example: [wh:pub/us.environmental.epa-npdes/Set/ontology/release@v4]",
+          "items": "wref"
+        }
+      }
+    },
+    {
+      "name": "CompetencyQuestion",
+      "description": "A question the ontology must answer — the unit of scope, evaluation, and acceptance. The deletion test runs against these: a Shape no question cites does not ship. Naming: CompetencyQuestion/ontology/{domain}/{id}.",
+      "fields": {
+        "question": {
+          "type": "string",
+          "description": "The question, phrased as its persona would actually ask it — including the decision it feeds, where that matters. Example: \"Which NC wastewater facilities show recurring warm-season ammonia exceedances — and on what evidence?\""
+        },
+        "personas": {
+          "type": "array",
+          "description": "Who asks it. Example: [\"water-practice lead\", \"market analyst\"]",
+          "items": "string"
+        },
+        "requiredConcepts": {
+          "type": "array",
+          "description": "The Shapes this question depends on — the deletion-test receipts. Example: [Facility, Measurement, PermitLimit, PerformancePattern]",
+          "items": "wref"
+        },
+        "temporalSemantics?": {
+          "type": "string",
+          "description": "Observation window, seasonality, as-of semantics the answer must honor. Example: \"Warm season = May–Sep; windows 2022–2025; answer as-of latest complete quarter\""
+        },
+        "provenanceRequirement?": {
+          "type": "string",
+          "description": "How deep the answer's pedigree must reach to count as answered. Example: artifact-hash-level",
+          "enum": [
+            "none",
+            "source-level",
+            "artifact-hash-level"
+          ]
+        }
+      }
+    },
+    {
+      "name": "SemanticContract",
+      "description": "Assertion, about a Shape this repo owns: the semantic contract governing a type, version-bound to the exact Shape revision it governs. Naming: SemanticContract/ontology/{type}. Which questions a type serves is not stored — it is the backlink query over CompetencyQuestion.requiredConcepts; never store what the graph already encodes.",
+      "fields": {
+        "definition": {
+          "type": "string",
+          "description": "What the concept is, in domain language and, when adopted, the established authority's terms. Example: \"A facility, site, or place of environmental interest identified under the reviewed EPA FRS contract\""
+        },
+        "identityTest": {
+          "type": "string",
+          "description": "When do two records refer to the same one of these? The heart of the contract — most ontology failures are identity failures. Example: \"Same EPA FRS Registry ID under the reviewed FRS lifecycle and correction rules\""
+        },
+        "examples?": {
+          "type": "array",
+          "description": "Things that are this concept. Example: [\"FRS Registry ID 110012345678\"]",
+          "items": "string"
+        },
+        "counterexamples?": {
+          "type": "array",
+          "description": "Things that look like this concept and are not under the adopted authority contract. Example: [\"A linked NPDES program record\", \"A permit held by the facility\"]",
+          "items": "string"
+        },
+        "lifecycleNotes?": {
+          "type": "string",
+          "description": "How identity begins and ends, including adopted authority correction, merge, split, reuse, and succession behavior. Example: \"Follow reviewed FRS correction, merge, and split semantics; display-name or program-link changes preserve identity\""
+        },
+        "lifecycleStatus": {
+          "type": "string",
+          "description": "Contract maturity; consumers read this before depending. Example: approved",
+          "enum": [
+            "candidate",
+            "experimental",
+            "approved",
+            "promoted",
+            "deprecated"
+          ]
+        }
+      }
+    },
+    {
+      "name": "PredicateDeclaration",
+      "description": "Assertion, about a predicate Shape this repo owns: the relationship's ontological metadata — everything a writer or reader needs that does not belong on the predicate Shape's field list. Naming: PredicateDeclaration/ontology/{predicate}. Whether instances carry valid time is visible from the predicate Shape's own fields; evidence expectations belong in that Shape's field constraints.",
+      "fields": {
+        "subjectPattern": {
+          "type": "string",
+          "description": "Name-glob for the relationship subject (Arc from / first Bond end). Example: Organization/identity/**"
+        },
+        "objectPattern": {
+          "type": "string",
+          "description": "Name-glob for the relationship object (Arc to / second Bond end). Example: Facility/identity/**"
+        },
+        "forwardLabel": {
+          "type": "string",
+          "description": "Subject-to-object reading. Example: \"owns\""
+        },
+        "inverseLabel": {
+          "type": "string",
+          "description": "Object-to-subject reading. Example: \"is owned by\""
+        },
+        "subjectForm": {
+          "type": "string",
+          "description": "Directed (arc) or symmetric (bond) relationship subject. Example: arc",
+          "enum": [
+            "arc",
+            "bond"
+          ]
+        },
+        "subjectNameRecipe?": {
+          "type": "string",
+          "description": "Deterministic recipe for naming the Arc/Bond. The platform never converges independent writers; this recipe is what makes them mint one relationship subject instead of two. State what happens on member rename. Example: Arc/identity/rel/{subject-last-segment}--{object-last-segment} yielding Arc/identity/rel/epa-npdes-NC0071234--epa-frs-110012345678"
+        },
+        "structuralCardinality": {
+          "type": "string",
+          "description": "Across all modeled history. Example: many:many",
+          "enum": [
+            "one:one",
+            "one:many",
+            "many:one",
+            "many:many"
+          ]
+        },
+        "concurrentCardinality?": {
+          "type": "string",
+          "description": "During overlapping valid time — a different question (joint ownership is real). Example: one:many",
+          "enum": [
+            "one:one",
+            "one:many",
+            "many:one",
+            "many:many"
+          ]
+        },
+        "epistemicClass?": {
+          "type": "string",
+          "description": "Which kind of claim this predicate makes. Never collapse the three into one Shape. Example: normalized-state",
+          "enum": [
+            "source-claim",
+            "normalized-state",
+            "binomial-proposition"
+          ]
+        },
+        "prohibitedSemantics?": {
+          "type": "array",
+          "description": "Meanings this predicate must not be used for. Example: [\"operation\", \"permitteeship\"]",
+          "items": "string"
+        },
+        "antiInferences?": {
+          "type": "array",
+          "description": "The seductive shortcuts agents must not take. Put these where agents will read them. Example: [\"permit-issued-to does not imply ownership\"]",
+          "items": "string"
+        }
+      }
+    },
+    {
+      "name": "NamingContract",
+      "description": "Assertion, about a Shape this repo owns: the namespace contract for that Shape's Things. Naming: NamingContract/ontology/{shape}.",
+      "fields": {
+        "nameTemplate": {
+          "type": "string",
+          "description": "The name template for this Shape's Things. Example: Facility/identity/epa-frs/{registry-id}"
+        },
+        "segmentSemantics": {
+          "type": "array",
+          "description": "What each segment means and why it is where it is (leading segments = the dimensions agents narrow by; layer segment = cross-shape scoping). Example: [\"identity — the layer; scopes globs and tokens\", \"epa-frs — adopted identity authority\", \"registry-id — authority-managed key\"]",
+          "items": "string"
+        },
+        "exampleNames": {
+          "type": "array",
+          "description": "Enough real examples that an agent can infer the convention and predict nearby Things (depth included). Example: [Facility/identity/epa-frs/110012345678]",
+          "items": "string"
+        },
+        "globs?": {
+          "type": "array",
+          "description": "The subtree selections this namespace is designed to serve — the same vocabulary scopes queries, subscriptions, tokens, and feeds. Example: [Facility/identity/epa-frs/**, */identity/**]",
+          "items": "string"
+        },
+        "identityStabilityTest": {
+          "type": "string",
+          "description": "Which real-world changes must NOT falsify a name. If an identity-preserving change breaks the name, the contract is wrong. No-relationships-in-names is a global rule, not per-shape configuration. Example: \"FRS display-name, address, owner, and program-link changes must not break the Registry ID name; follow reviewed correction/split/merge semantics\""
+        }
+      }
+    },
+    {
+      "name": "GoldenCase",
+      "description": "An adversarial real-world case, pointing at the live data that models it — the fixture IS production data. The review question is always the same: is the ontology lying? Naming: GoldenCase/ontology/{slug}.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "description": "The case in a phrase. Example: \"Several program records, one FRS identity\""
+        },
+        "narrative": {
+          "type": "string",
+          "description": "The real-world situation, precisely why it is adversarial (which identity test or cardinality assumption it attacks), and what passing looks like. Example: \"Linked NPDES and state program records attack the temptation to mint private facilities. Passing: both resolve to the authority-managed FRS identity while their source claims remain distinct.\""
+        },
+        "exemplarWrefs": {
+          "type": "array",
+          "description": "The live Things and Assertions modeling this case. Example: [Facility/identity/epa-frs/110012345678, RefersToFacility/identity/epa-npdes/NC0071234]",
+          "items": "wref"
+        }
+      }
+    },
+    {
+      "name": "OntologyDecision",
+      "description": "A deliberately open or explicitly resolved design decision. Unresolved-on-purpose beats silently-inconsistent. Naming: OntologyDecision/ontology/od-{id}.",
+      "fields": {
+        "title": {
+          "type": "string",
+          "description": "The decision in a phrase. Example: \"Pump stations: Facilities or components?\""
+        },
+        "question": {
+          "type": "string",
+          "description": "What is actually being decided. Example: \"Do pump stations get their own Facility identity, or ride as components of the works they feed?\""
+        },
+        "options": {
+          "type": "array",
+          "description": "The candidate answers, with their trade-offs. Example: [\"Own Facility (can hold permits)\", \"Component of parent works\"]",
+          "items": "string"
+        },
+        "currentLean?": {
+          "type": "string",
+          "description": "The working position, if any. Example: \"Own Facility\""
+        },
+        "settlingEvidence?": {
+          "type": "string",
+          "description": "What observation or experiment would settle it — the decision's exit criteria. Example: \"Whether any NC pump station holds its own NPDES permit\""
+        },
+        "status": {
+          "type": "string",
+          "description": "Lifecycle. Example: open",
+          "enum": [
+            "open",
+            "resolved",
+            "superseded"
+          ]
+        },
+        "resolution?": {
+          "type": "string",
+          "description": "The answer and its rationale, once resolved."
+        }
+      }
+    },
+    {
+      "name": "CompetencyEvaluation",
+      "description": "Assertion, about a CompetencyQuestion: the claim that a specific release answers a specific question. Binomial and attributed — independent evaluators may disagree, and Veritas consensus over evaluations is meaningful. Evaluation is ex-post by construction: revise contracts, revise Set/ontology/release (a new release), then evaluate against it. A failing evaluation is not a blocked release; the gate is on adoption, not on release. Naming: CompetencyEvaluation/ontology/{release-version}/{question}.",
+      "fields": {
+        "release": {
+          "type": "wref",
+          "description": "The release evaluated — Set/ontology/release pinned to the version under test (wref members and fields always pin; unpinned resolves to latest at write). Backlinks make all-evaluations-of-release-N one query. Example: Set/ontology/release@v3",
+          "shape": "Set"
+        },
+        "passed": {
+          "type": "boolean",
+          "description": "Did the release answer the question within its provenance requirements? Example: true"
+        },
+        "evaluator": {
+          "type": "string",
+          "description": "The agent or human who ran the evaluation and stands behind it. Example: evaluate-ontology/1.2 (agent)"
+        },
+        "evaluatedAsOf": {
+          "type": "string",
+          "description": "ISO timestamp of the evaluation run. Example: 2026-07-01T04:00:00Z"
+        },
+        "queryExecuted": {
+          "type": "string",
+          "description": "The concrete query or traversal used — the evaluation must be reproducible. Example: \"reverse-about: PerformancePattern/water/** where patternClass=recurring-warm-season-elevation, joined to Facility\""
+        },
+        "resultDigest?": {
+          "type": "string",
+          "description": "Short digest of the result that satisfied (or failed) the question. Example: \"14 facilities; every pattern traverses to a DMR artifact hash\""
+        },
+        "notes?": {
+          "type": "string",
+          "description": "Scale caveats, cohort scope, re-run triggers. Example: \"NC cohort only; re-run when a new DMR quarter lands\""
+        }
+      }
+    }
+  ],
+  "seeds": [],
+  "subscriptions": [],
+  "credentials": [],
+  "runtimeAccess": {
+    "reads": [],
+    "writes": []
+  },
+  "health": {
+    "requires": {
+      "shapes": [
+        "OntologyCharter",
+        "CompetencyQuestion",
+        "SemanticContract",
+        "PredicateDeclaration",
+        "NamingContract",
+        "GoldenCase",
+        "OntologyDecision",
+        "CompetencyEvaluation"
+      ]
+    }
+  },
+  "teardown": {}
+}
