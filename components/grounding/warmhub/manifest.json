@@ -3,12 +3,12 @@
   "component": {
     "id": "ai.warmhub.data.Grounding",
     "name": "grounding",
-    "version": "4.0.0"
+    "version": "4.0.1"
   },
   "shapes": [
     {
       "name": "Source",
-      "description": "The logical source system or publishing authority — the durable identity behind many artifacts over time. Naming is repository-specific under a NamingContract; examples are Source/{system-slug} in a per-source repository and Source/grounding/{authority}/{source-system} in a co-located repository. These are conventions, not platform-fixed names.",
+      "description": "The logical source system or publishing authority — the durable identity behind many artifacts over time. Named by the repository's NamingContract, for example source/{system-slug} in a per-source repository or grounding/source/{authority}/{source-system} in a co-located one.",
       "fields": {
         "publisherName": {
           "type": "string",
@@ -30,11 +30,11 @@
     },
     {
       "name": "SourceArtifact",
-      "description": "The versioned canonical semantic snapshots of one logical dataset stream from one Source. The Thing identity names the enduring stream under a repository NamingContract; examples are SourceArtifact/{stream-slug} in a per-source repository and SourceArtifact/grounding/{authority}/{source-system}/{stream-slug} in a co-located repository. Each Thing version records one accepted canonical snapshot. Transport-only differences must canonicalize to the same semanticSha256 and are a no-op; a changed snapshot revises the same Thing. These are conventions, not platform-fixed names.",
+      "description": "The versioned canonical semantic snapshots of one logical dataset stream from one Source. The Thing names the enduring stream under the repository's NamingContract, for example artifact/{stream-slug} in a per-source repository or grounding/artifact/{authority}/{source-system}/{stream-slug} in a co-located one. Each Thing version records one accepted canonical snapshot. Transport-only differences must canonicalize to the same semanticSha256 and are a no-op; a changed snapshot revises the same Thing.",
       "fields": {
         "source": {
           "type": "wref",
-          "description": "The logical publishing source system (a Source Thing). Example: Source/epa-icis-npdes",
+          "description": "The logical publishing source system (a Source Thing). Example: source/epa-icis-npdes",
           "shape": "Source"
         },
         "semanticSha256": {

@@ -3,12 +3,12 @@
   "component": {
     "id": "ai.warmhub.data.Ontology",
     "name": "ontology",
-    "version": "2.0.1"
+    "version": "2.0.2"
   },
   "shapes": [
     {
       "name": "OntologyCharter",
-      "description": "One active charter per repo — the constitution of this repo's ontology. Singleton with a fixed, well-known name: OntologyCharter/ontology/charter, so any agent can fetch it in any repo without discovery. This charter binds only its own repo; cross-repo composition is expressed as dependencies (dependsOn), never membership.",
+      "description": "One active charter per repo — the constitution of this repo's ontology. Singleton with a fixed, well-known name: ontology/charter, so any agent can fetch it in any repo without discovery. This charter binds only its own repo; cross-repo composition is expressed as dependencies (dependsOn), never membership.",
       "fields": {
         "mission": {
           "type": "string",
@@ -26,14 +26,14 @@
         },
         "dependsOn?": {
           "type": "array",
-          "description": "Upstream ontologies this repo composes over — each entry the canonical wref of an upstream release Set (preferred: pins the exact contract versions depended on, like a lockfile) or an upstream charter. Dependencies, never membership: this charter binds only its own repo. Example: [wh:pub/us.environmental.epa-npdes/Set/ontology/release@v4]",
+          "description": "Upstream ontologies this repo composes over — each entry the canonical wref of an upstream release Set (preferred: pins the exact contract versions depended on, like a lockfile) or an upstream charter. Dependencies, never membership: this charter binds only its own repo. Example: [wh:pub/us.environmental.epa-npdes/ontology/release@v4]",
           "items": "wref"
         }
       }
     },
     {
       "name": "CompetencyQuestion",
-      "description": "A question the ontology must answer — the unit of scope, evaluation, and acceptance. The deletion test runs against these: a Shape no question cites does not ship. Naming: CompetencyQuestion/ontology/{domain}/{id}.",
+      "description": "A question the ontology must answer — the unit of scope, evaluation, and acceptance. The deletion test runs against these: a Shape no question cites does not ship. Naming: ontology/{domain}/{id}.",
       "fields": {
         "question": {
           "type": "string",
@@ -46,7 +46,7 @@
         },
         "requiredConcepts": {
           "type": "array",
-          "description": "The Shapes this question depends on — the deletion-test receipts. Example: [Facility, Measurement, PermitLimit, PerformancePattern]",
+          "description": "The Shapes this question depends on — the deletion-test receipts. Example: [hub/shapes/Facility@v2, hub/shapes/Measurement@v3, hub/shapes/PermitLimit@v1, hub/shapes/PerformancePattern@v1]; use installed Shape versions",
           "items": "wref"
         },
         "temporalSemantics?": {
@@ -66,7 +66,8 @@
     },
     {
       "name": "SemanticContract",
-      "description": "Assertion, about a Shape this repo owns: the semantic contract governing a type, version-bound to the exact Shape revision it governs. Naming: SemanticContract/ontology/{type}. Which questions a type serves is not stored — it is the backlink query over CompetencyQuestion.requiredConcepts; never store what the graph already encodes.",
+      "composes": ["Assertion"],
+      "description": "Assertion, about a Shape this repo owns: the semantic contract governing a type, version-bound to the exact Shape revision it governs. Naming: ontology/{type}/semantic-contract; the suffix distinguishes it from the NamingContract for the same type. Which questions a type serves is not stored — it is the backlink query over CompetencyQuestion.requiredConcepts; never store what the graph already encodes.",
       "fields": {
         "definition": {
           "type": "string",
@@ -105,15 +106,16 @@
     },
     {
       "name": "PredicateDeclaration",
-      "description": "Assertion, about a predicate Shape this repo owns: the relationship's ontological metadata — everything a writer or reader needs that does not belong on the predicate Shape's field list. Naming: PredicateDeclaration/ontology/{predicate}. Whether instances carry valid time is visible from the predicate Shape's own fields; evidence expectations belong in that Shape's field constraints.",
+      "composes": ["Assertion"],
+      "description": "Assertion, about a predicate Shape this repo owns: the relationship's ontological metadata — everything a writer or reader needs that does not belong on the predicate Shape's field list. Naming: ontology/{predicate}, distinct from any NamingContract for that predicate. Whether instances carry valid time is visible from the predicate Shape's own fields; evidence expectations belong in that Shape's field constraints.",
       "fields": {
         "subjectPattern": {
           "type": "string",
-          "description": "Name-glob for the relationship subject (Arc from / first Bond end). Example: Organization/identity/**"
+          "description": "Name-glob for the relationship subject (Arc from / first Bond end). Example: identity/organization/**"
         },
         "objectPattern": {
           "type": "string",
-          "description": "Name-glob for the relationship object (Arc to / second Bond end). Example: Facility/identity/**"
+          "description": "Name-glob for the relationship object (Arc to / second Bond end). Example: identity/facility/**"
         },
         "forwardLabel": {
           "type": "string",
@@ -133,7 +135,7 @@
         },
         "subjectNameRecipe?": {
           "type": "string",
-          "description": "Deterministic recipe for naming the Arc/Bond. The platform never converges independent writers; this recipe is what makes them mint one relationship subject instead of two. State what happens on member rename. Example: Arc/identity/rel/{subject-last-segment}--{object-last-segment} yielding Arc/identity/rel/epa-npdes-NC0071234--epa-frs-110012345678"
+          "description": "Deterministic recipe for naming the Arc/Bond. The platform never converges independent writers; this recipe is what makes them mint one relationship subject instead of two. State what happens on member rename. Example: identity/rel/{subject-last-segment}--{object-last-segment} yielding identity/rel/epa-npdes-NC0071234--epa-frs-110012345678"
         },
         "structuralCardinality": {
           "type": "string",
@@ -178,25 +180,26 @@
     },
     {
       "name": "NamingContract",
-      "description": "Assertion, about a Shape this repo owns: the namespace contract for that Shape's Things. Naming: NamingContract/ontology/{shape}.",
+      "composes": ["Assertion"],
+      "description": "Assertion, about a Shape this repo owns: the namespace contract for that Shape's Things. Naming: ontology/{shape}, distinct from any other contract for that Shape.",
       "fields": {
         "nameTemplate": {
           "type": "string",
-          "description": "The name template for this Shape's Things. Example: Facility/identity/epa-frs/{registry-id}"
+          "description": "The name template for this Shape's Things. Example: identity/facility/epa-frs/{registry-id}"
         },
         "segmentSemantics": {
           "type": "array",
-          "description": "What each segment means and why it is where it is (leading segments = the dimensions agents narrow by; layer segment = cross-shape scoping). Example: [\"identity — the layer; scopes globs and tokens\", \"epa-frs — adopted identity authority\", \"registry-id — authority-managed key\"]",
+          "description": "What each segment means and why it is where it is (leading segments = the dimensions agents narrow by; layer segment = cross-shape scoping). Example: [\"identity — the layer; scopes globs and tokens\", \"facility — the Thing family\", \"epa-frs — adopted identity authority\", \"registry-id — authority-managed key\"]",
           "items": "string"
         },
         "exampleNames": {
           "type": "array",
-          "description": "Enough real examples that an agent can infer the convention and predict nearby Things (depth included). Example: [Facility/identity/epa-frs/110012345678]",
+          "description": "Enough real examples that an agent can infer the convention and predict nearby Things (depth included). Example: [identity/facility/epa-frs/110012345678]",
           "items": "string"
         },
         "globs?": {
           "type": "array",
-          "description": "The subtree selections this namespace is designed to serve — the same vocabulary scopes queries, subscriptions, tokens, and feeds. Example: [Facility/identity/epa-frs/**, */identity/**]",
+          "description": "The subtree selections this namespace is designed to serve — the same vocabulary scopes queries, subscriptions, tokens, and feeds. A rename updates these globs, nameTemplate, and exampleNames in the same migration. Example: [identity/facility/epa-frs/**, identity/**]",
           "items": "string"
         },
         "identityStabilityTest": {
@@ -207,7 +210,7 @@
     },
     {
       "name": "GoldenCase",
-      "description": "An adversarial real-world case, pointing at the live data that models it — the fixture IS production data. The review question is always the same: is the ontology lying? Naming: GoldenCase/ontology/{slug}.",
+      "description": "An adversarial real-world case, pointing at the live data that models it — the fixture IS production data. The review question is always the same: is the ontology lying? Naming: ontology/{slug}.",
       "fields": {
         "title": {
           "type": "string",
@@ -219,14 +222,14 @@
         },
         "exemplarWrefs": {
           "type": "array",
-          "description": "The live Things and Assertions modeling this case. Example: [Facility/identity/epa-frs/110012345678, RefersToFacility/identity/epa-npdes/NC0071234]",
+          "description": "The live Things and Assertions modeling this case. Example: [identity/facility/epa-frs/110012345678, identity/refers-to-facility/epa-npdes/NC0071234]",
           "items": "wref"
         }
       }
     },
     {
       "name": "OntologyDecision",
-      "description": "A deliberately open or explicitly resolved design decision. Unresolved-on-purpose beats silently-inconsistent. Naming: OntologyDecision/ontology/od-{id}.",
+      "description": "A deliberately open or explicitly resolved design decision. Unresolved-on-purpose beats silently-inconsistent. Naming: ontology/od-{id}.",
       "fields": {
         "title": {
           "type": "string",
@@ -266,11 +269,12 @@
     },
     {
       "name": "CompetencyEvaluation",
-      "description": "Assertion, about a CompetencyQuestion: the claim that a specific release answers a specific question. Binomial and attributed — independent evaluators may disagree, and Veritas consensus over evaluations is meaningful. Evaluation is ex-post by construction: revise contracts, revise Set/ontology/release (a new release), then evaluate against it. A failing evaluation is not a blocked release; the gate is on adoption, not on release. Naming: CompetencyEvaluation/ontology/{release-version}/{question}.",
+      "composes": ["Assertion"],
+      "description": "Assertion, about a CompetencyQuestion: the claim that a specific release answers a specific question. Binomial and attributed — independent evaluators may disagree, and Veritas consensus over evaluations is meaningful. Evaluation is ex-post by construction: revise contracts, revise the ontology/release Set (a new release), then evaluate against it. A failing evaluation is not a blocked release; the gate is on adoption, not on release. Naming: ontology/{release-version}/{question}.",
       "fields": {
         "release": {
           "type": "wref",
-          "description": "The release evaluated — Set/ontology/release pinned to the version under test (wref members and fields always pin; unpinned resolves to latest at write). Backlinks make all-evaluations-of-release-N one query. Example: Set/ontology/release@v3",
+          "description": "The release evaluated — ontology/release pinned to the version under test (this field is version-bound; author the exact evaluated release pin). Backlinks make all-evaluations-of-release-N one query. Example: ontology/release@v3",
           "shape": "Set"
         },
         "passed": {
@@ -287,7 +291,7 @@
         },
         "queryExecuted": {
           "type": "string",
-          "description": "The concrete query or traversal used — the evaluation must be reproducible. Example: \"reverse-about: PerformancePattern/water/** where patternClass=recurring-warm-season-elevation, joined to Facility\""
+          "description": "The concrete query or traversal used — the evaluation must be reproducible. Example: \"reverse-about: PerformancePattern water/performance-pattern/** where patternClass=recurring-warm-season-elevation, joined to Facility\""
         },
         "resultDigest?": {
           "type": "string",

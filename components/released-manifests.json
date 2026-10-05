@@ -1,0 +1,10 @@
+{
+  "grounding": {
+    "version": "4.0.1",
+    "sha256": "f7f32bc9a7b261b92591ef80fbbb6c3f9111d257893aec388ade7d01ab3a7fde"
+  },
+  "ontology": {
+    "version": "2.0.2",
+    "sha256": "45aa505413b64b69e4e2fbd5897ad0ab593e1734b5215a59d40537e88e52fa18"
+  }
+}
